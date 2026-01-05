@@ -144,7 +144,8 @@ public class BrbPlugin extends Plugin
 		String message = event.getMessage().toLowerCase();
 		String playerName = event.getName();
 
-		if (message.contains("back"))
+		Pattern backPattern = Pattern.compile("\\bback\\b", Pattern.CASE_INSENSITIVE);
+		if (backPattern.matcher(message).find())
 		{
 			AfkStatus removed = afkPlayers.remove(playerName);
 			if (removed != null)
@@ -172,7 +173,8 @@ public class BrbPlugin extends Plugin
 		{
 			for (String keyword : KEYWORDS)
 			{
-				if (message.contains(keyword))
+				Pattern keywordPattern = Pattern.compile("\\b" + Pattern.quote(keyword) + "\\b", Pattern.CASE_INSENSITIVE);
+				if (keywordPattern.matcher(message).find())
 				{
 					hasKeyword = true;
 					break;
@@ -231,8 +233,10 @@ public class BrbPlugin extends Plugin
 		String statusText = "AFK";
 		String icon = "⏸️";
 		
-		boolean isBrb = message.contains("brb");
-		boolean isAfk = message.contains("afk");
+		Pattern brbPattern = Pattern.compile("\\bbrb\\b", Pattern.CASE_INSENSITIVE);
+		Pattern afkPattern = Pattern.compile("\\bafk\\b", Pattern.CASE_INSENSITIVE);
+		boolean isBrb = brbPattern.matcher(message).find();
+		boolean isAfk = afkPattern.matcher(message).find();
 		
 		if (isBrb)
 		{
