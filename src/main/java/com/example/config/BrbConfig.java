@@ -140,7 +140,7 @@ public interface BrbConfig extends Config
 	)
 	default HighlightType highlightType()
 	{
-		return HighlightType.TILE;
+		return HighlightType.OUTLINE;
 	}
 
 	@ConfigItem(
@@ -225,7 +225,7 @@ public interface BrbConfig extends Config
 	)
 	default Color friendsClanColor()
 	{
-		return Color.GREEN;
+		return new Color(0xF100FF);
 	}
 
 }

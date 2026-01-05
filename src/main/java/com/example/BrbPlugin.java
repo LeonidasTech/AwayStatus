@@ -173,7 +173,7 @@ public class BrbPlugin extends Plugin
 		{
 			for (String keyword : KEYWORDS)
 			{
-				Pattern keywordPattern = Pattern.compile("\\b" + Pattern.quote(keyword) + "\\b", Pattern.CASE_INSENSITIVE);
+				Pattern keywordPattern = Pattern.compile("\\b" + Pattern.quote(keyword) + "(?=\\s|\\d|\\b|$)", Pattern.CASE_INSENSITIVE);
 				if (keywordPattern.matcher(message).find())
 				{
 					hasKeyword = true;
@@ -232,9 +232,9 @@ public class BrbPlugin extends Plugin
 		long durationMs = 0;
 		String statusText = "AFK";
 		String icon = "⏸️";
-		
-		Pattern brbPattern = Pattern.compile("\\bbrb\\b", Pattern.CASE_INSENSITIVE);
-		Pattern afkPattern = Pattern.compile("\\bafk\\b", Pattern.CASE_INSENSITIVE);
+
+		Pattern brbPattern = Pattern.compile("\\bbrb(?=\\s|\\d|\\b|$)", Pattern.CASE_INSENSITIVE);
+		Pattern afkPattern = Pattern.compile("\\bafk(?=\\s|\\d|\\b|$)", Pattern.CASE_INSENSITIVE);
 		boolean isBrb = brbPattern.matcher(message).find();
 		boolean isAfk = afkPattern.matcher(message).find();
 		
