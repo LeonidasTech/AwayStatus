@@ -60,7 +60,13 @@ public class BrbMinimapOverlay extends Overlay
 				continue;
 			}
 
-			AfkStatus status = afkPlayers.get(player.getName());
+			String normalizedName = plugin.normalizePlayerName(player.getName());
+			if (normalizedName == null || normalizedName.isEmpty())
+			{
+				continue;
+			}
+
+			AfkStatus status = afkPlayers.get(normalizedName);
 			if (status == null)
 			{
 				continue;
@@ -86,7 +92,8 @@ public class BrbMinimapOverlay extends Overlay
 			return;
 		}
 
-		boolean isFriendOrClan = plugin.isFriendOrClanMember(player.getName());
+		String normalizedName = plugin.normalizePlayerName(player.getName());
+		boolean isFriendOrClan = plugin.isFriendOrClanMember(normalizedName);
 		Color indicatorColor = isFriendOrClan && config.highlightFriendsClan() 
 			? config.friendsClanColor() 
 			: config.highlightColor();
@@ -99,4 +106,5 @@ public class BrbMinimapOverlay extends Overlay
 		graphics.drawOval(x, y, 6, 6);
 	}
 }
+
 

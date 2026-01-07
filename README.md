@@ -67,29 +67,6 @@ The plugin includes several hardcoded default keywords that work out of the box:
 - `brb shower`, `gonna shower` → "BRB Shower" 🚿
 - `brb phone`, `phone call`, `brb call` → "BRB Phone" 📱
 
-## Configuration
-
-### Display Settings
-- **Show Countdown**: Toggle countdown/elapsed time display
-- **Highlight AFK Player**: Enable/disable player highlighting
-- **Highlight Type**: Choose between Tile, Glow, or Outline highlighting
-- **Highlight Color**: Customize the highlight color (default: Red)
-
-### Text Settings
-- **Text X/Y Offset**: Adjust text position (supports negative values)
-- **Text Font**: Choose from various fonts including RuneScape font
-- **Text Font Size**: Adjust font size (default: 15)
-- **Bold Text**: Toggle bold text (not applicable for RuneScape font)
-- **Text Color**: Customize text color (default: Yellow)
-
-### Advanced Features
-- **Show Minimap Indicator**: Display indicators on the minimap for AFK players
-- **Custom Keywords**: Configure custom keywords and status messages
-- **Auto-Remove Inactive**: Automatically remove AFK status after inactivity timeout
-- **Inactive Timeout**: Set minutes of inactivity before auto-removal
-- **Highlight Friends/Clan**: Use different colors for friends and clan members
-- **Friends/Clan Highlight Color**: Color for friends/clan highlights (default: Green)
-
 ## How It Works
 
 1. **Detection**: The plugin monitors chat messages for keywords in public chat, private messages, friends chat, and clan chat

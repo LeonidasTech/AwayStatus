@@ -69,22 +69,36 @@ public class BrbPlugin extends Plugin
 		DEFAULT_KEYWORDS.put("brb eating", new CustomKeyword("brb eating", "Getting Food", "🍔"));
 		DEFAULT_KEYWORDS.put("brb coffee", new CustomKeyword("brb coffee", "Getting Coffee", "☕"));
 		DEFAULT_KEYWORDS.put("gonna get coffee", new CustomKeyword("gonna get coffee", "Getting Coffee", "☕"));
+		DEFAULT_KEYWORDS.put("going to get coffee", new CustomKeyword("going to get coffee", "Getting Coffee", "☕"));
 		DEFAULT_KEYWORDS.put("brb smoke", new CustomKeyword("brb smoke", "BRB Smoke", "🚬"));
 		DEFAULT_KEYWORDS.put("brb smoking", new CustomKeyword("brb smoking", "BRB Smoke", "🚬"));
 		DEFAULT_KEYWORDS.put("gonna smoke", new CustomKeyword("gonna smoke", "BRB Smoke", "🚬"));
+		DEFAULT_KEYWORDS.put("going to smoke", new CustomKeyword("going to smoke", "BRB Smoke", "🚬"));
 		DEFAULT_KEYWORDS.put("brb shower", new CustomKeyword("brb shower", "BRB Shower", "🚿"));
 		DEFAULT_KEYWORDS.put("gonna shower", new CustomKeyword("gonna shower", "BRB Shower", "🚿"));
+		DEFAULT_KEYWORDS.put("going to shower", new CustomKeyword("going to shower", "BRB Shower", "🚿"));
 		DEFAULT_KEYWORDS.put("brb phone", new CustomKeyword("brb phone", "BRB Phone", "📱"));
 		DEFAULT_KEYWORDS.put("phone call", new CustomKeyword("phone call", "BRB Phone", "📱"));
 		DEFAULT_KEYWORDS.put("brb call", new CustomKeyword("brb call", "BRB Phone", "📱"));
 	}
 
 	private final Map<String, WorldPoint> playerPositions = new ConcurrentHashMap<>();
-	private static final String[] KEYWORDS = {"brb", "afk", "away"};
+	private static final String[] KEYWORDS = {"brb", "be right back", "afk", "away"};
 	private static final Pattern TIME_PATTERN = Pattern.compile(
 		"(\\d+)\\s*(min(?:ute)?s?|sec(?:ond)?s?|m|s)",
 		Pattern.CASE_INSENSITIVE
 	);
+
+	public String normalizePlayerName(String name)
+	{
+		if (name == null)
+		{
+			return null;
+		}
+		return name.replaceAll("\\p{Zs}+", " ")
+			.replaceAll("\\s+", " ")
+			.trim();
+	}
 
 	@Override
 	protected void startUp() throws Exception
@@ -141,8 +155,19 @@ public class BrbPlugin extends Plugin
 			return;
 		}
 
-		String message = event.getMessage().toLowerCase();
-		String playerName = event.getName();
+		String message = event.getMessage();
+		if (message == null)
+		{
+			return;
+		}
+
+		message = message.toLowerCase();
+		String playerName = normalizePlayerName(event.getName());
+		
+		if (playerName == null || playerName.isEmpty())
+		{
+			return;
+		}
 
 		Pattern backPattern = Pattern.compile("\\bback\\b", Pattern.CASE_INSENSITIVE);
 		if (backPattern.matcher(message).find())
@@ -233,7 +258,7 @@ public class BrbPlugin extends Plugin
 		String statusText = "AFK";
 		String icon = "⏸️";
 
-		Pattern brbPattern = Pattern.compile("\\bbrb(?=\\s|\\d|\\b|$)", Pattern.CASE_INSENSITIVE);
+		Pattern brbPattern = Pattern.compile("\\b(brb|be right back)(?=\\s|\\d|\\b|$)", Pattern.CASE_INSENSITIVE);
 		Pattern afkPattern = Pattern.compile("\\bafk(?=\\s|\\d|\\b|$)", Pattern.CASE_INSENSITIVE);
 		boolean isBrb = brbPattern.matcher(message).find();
 		boolean isAfk = afkPattern.matcher(message).find();
@@ -324,9 +349,9 @@ public class BrbPlugin extends Plugin
 					continue;
 				}
 
-				String playerName = player.getName();
+				String playerName = normalizePlayerName(player.getName());
 				
-				if (!afkPlayers.containsKey(playerName))
+				if (playerName == null || playerName.isEmpty() || !afkPlayers.containsKey(playerName))
 				{
 					continue;
 				}
@@ -383,12 +408,13 @@ public class BrbPlugin extends Plugin
 
 	public boolean isFriendOrClanMember(String playerName)
 	{
-		if (!config.highlightFriendsClan())
+		if (!config.highlightFriendsClan() || playerName == null)
 		{
 			return false;
 		}
 
-		if (client.isFriended(playerName, false))
+		String normalizedName = normalizePlayerName(playerName);
+		if (client.isFriended(normalizedName, false))
 		{
 			return true;
 		}
@@ -398,9 +424,13 @@ public class BrbPlugin extends Plugin
 		{
 			for (FriendsChatMember member : friendsChatManager.getMembers())
 			{
-				if (member != null && playerName.equals(member.getName()))
+				if (member != null)
 				{
-					return true;
+					String memberName = normalizePlayerName(member.getName());
+					if (normalizedName.equals(memberName))
+					{
+						return true;
+					}
 				}
 			}
 		}
@@ -410,9 +440,13 @@ public class BrbPlugin extends Plugin
 		{
 			for (ClanChannelMember member : clanChannel.getMembers())
 			{
-				if (member != null && playerName.equals(member.getName()))
+				if (member != null)
 				{
-					return true;
+					String memberName = normalizePlayerName(member.getName());
+					if (normalizedName.equals(memberName))
+					{
+						return true;
+					}
 				}
 			}
 		}
@@ -432,7 +466,7 @@ public class BrbPlugin extends Plugin
 		{
 			if (player != null)
 			{
-				String name = player.getName();
+				String name = normalizePlayerName(player.getName());
 				if (name != null && name.equals(playerName))
 				{
 					return player;

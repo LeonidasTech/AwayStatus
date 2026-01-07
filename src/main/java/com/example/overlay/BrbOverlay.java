@@ -65,13 +65,19 @@ public class BrbOverlay extends Overlay
 				continue;
 			}
 
-			AfkStatus status = afkPlayers.get(player.getName());
+			String normalizedName = plugin.normalizePlayerName(player.getName());
+			if (normalizedName == null || normalizedName.isEmpty())
+			{
+				continue;
+			}
+
+			AfkStatus status = afkPlayers.get(normalizedName);
 			if (status == null)
 			{
 				continue;
 			}
 
-			boolean isFriendOrClan = plugin.isFriendOrClanMember(player.getName());
+			boolean isFriendOrClan = plugin.isFriendOrClanMember(normalizedName);
 			Color highlightColor = isFriendOrClan && config.highlightFriendsClan() 
 				? config.friendsClanColor() 
 				: config.highlightColor();
@@ -290,4 +296,5 @@ public class BrbOverlay extends Overlay
 		modelOutlineRenderer.drawOutline(player, 3, color, 0);
 	}
 }
+
 
