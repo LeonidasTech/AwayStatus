@@ -14,3 +14,4 @@ public class PlayerStats
 	private long lastAfkTime;
 }
 
+

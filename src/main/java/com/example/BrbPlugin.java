@@ -95,7 +95,8 @@ public class BrbPlugin extends Plugin
 		{
 			return null;
 		}
-		return name.replaceAll("\\p{Zs}+", " ")
+		return name.replaceAll("<img=\\d+>", "")
+			.replaceAll("\\p{Zs}+", " ")
 			.replaceAll("\\s+", " ")
 			.trim();
 	}
@@ -162,22 +163,47 @@ public class BrbPlugin extends Plugin
 		}
 
 		message = message.toLowerCase();
-		String playerName = normalizePlayerName(event.getName());
+		String rawPlayerName = event.getName();
+		String playerName = normalizePlayerName(rawPlayerName);
+		
+		// Debug logging for players with icons/special characters
+		if (rawPlayerName != null && !rawPlayerName.equals(playerName))
+		{
+			StringBuilder rawChars = new StringBuilder();
+			for (char c : rawPlayerName.toCharArray())
+			{
+				rawChars.append(String.format("'%c'(%d) ", c, (int) c));
+			}
+			log.debug("Player name normalization - Raw: '{}' [{}], Normalized: '{}'", 
+				rawPlayerName, rawChars.toString().trim(), playerName);
+		}
 		
 		if (playerName == null || playerName.isEmpty())
 		{
+			log.debug("Skipping chat message - player name is null or empty. Raw: '{}', Normalized: '{}', Message: '{}'", 
+				rawPlayerName, playerName, event.getMessage());
 			return;
 		}
+		
+		log.debug("Processing chat message from player - Raw name: '{}', Normalized: '{}', Message: '{}'", 
+			rawPlayerName, playerName, event.getMessage());
 
-		Pattern backPattern = Pattern.compile("\\bback\\b", Pattern.CASE_INSENSITIVE);
-		if (backPattern.matcher(message).find())
+		// If player is already AFK and types anything, remove AFK status
+		boolean wasAfk = afkPlayers.containsKey(playerName);
+		if (wasAfk)
 		{
 			AfkStatus removed = afkPlayers.remove(playerName);
 			if (removed != null)
 			{
-				log.debug("Player {} removed AFK status (said 'back')", playerName);
+				log.debug("Player {} removed AFK status (typed message)", playerName);
 			}
 			playerPositions.remove(playerName);
+		}
+		
+		// Check if they said "back" - if so, just return (no new status)
+		Pattern backPattern = Pattern.compile("\\bback\\b", Pattern.CASE_INSENSITIVE);
+		if (backPattern.matcher(message).find())
+		{
 			return;
 		}
 
@@ -221,19 +247,26 @@ public class BrbPlugin extends Plugin
 			Matcher timeMatcher = TIME_PATTERN.matcher(message);
 			if (timeMatcher.find())
 			{
-				int amount = Integer.parseInt(timeMatcher.group(1));
-				String unit = timeMatcher.group(2).toLowerCase();
-				
-				if (unit.startsWith("min") || unit.equals("m"))
+				try
 				{
-					if (amount > 60) amount = 60;
-					durationMs = amount * 60 * 1000L;
-					statusText += " " + amount + " min" + (amount != 1 ? "s" : "");
+					int amount = Integer.parseInt(timeMatcher.group(1));
+					String unit = timeMatcher.group(2).toLowerCase();
+					
+					if (unit.startsWith("min") || unit.equals("m"))
+					{
+						if (amount > 60) amount = 60;
+						durationMs = amount * 60 * 1000L;
+						statusText += " " + amount + " min" + (amount != 1 ? "s" : "");
+					}
+					else if (unit.startsWith("sec") || unit.equals("s"))
+					{
+						durationMs = amount * 1000L;
+						statusText += " " + amount + " sec" + (amount != 1 ? "s" : "");
+					}
 				}
-				else if (unit.startsWith("sec") || unit.equals("s"))
+				catch (NumberFormatException e)
 				{
-					durationMs = amount * 1000L;
-					statusText += " " + amount + " sec" + (amount != 1 ? "s" : "");
+					log.debug("Invalid time amount in message: {}", message);
 				}
 			}
 			
@@ -277,24 +310,31 @@ public class BrbPlugin extends Plugin
 		Matcher timeMatcher = TIME_PATTERN.matcher(message);
 		if (timeMatcher.find())
 		{
-			int amount = Integer.parseInt(timeMatcher.group(1));
-			String unit = timeMatcher.group(2).toLowerCase();
-			
-			if (unit.startsWith("min") || unit.equals("m"))
+			try
 			{
-				if (amount > 60)
+				int amount = Integer.parseInt(timeMatcher.group(1));
+				String unit = timeMatcher.group(2).toLowerCase();
+				
+				if (unit.startsWith("min") || unit.equals("m"))
 				{
-					amount = 60;
+					if (amount > 60)
+					{
+						amount = 60;
+					}
+					durationMs = amount * 60 * 1000L;
+					statusText = statusText + " " + amount + " min" + (amount != 1 ? "s" : "");
+					icon = "⏰";
 				}
-				durationMs = amount * 60 * 1000L;
-				statusText = statusText + " " + amount + " min" + (amount != 1 ? "s" : "");
-				icon = "⏰";
+				else if (unit.startsWith("sec") || unit.equals("s"))
+				{
+					durationMs = amount * 1000L;
+					statusText = statusText + " " + amount + " sec" + (amount != 1 ? "s" : "");
+					icon = "⏰";
+				}
 			}
-			else if (unit.startsWith("sec") || unit.equals("s"))
+			catch (NumberFormatException e)
 			{
-				durationMs = amount * 1000L;
-				statusText = statusText + " " + amount + " sec" + (amount != 1 ? "s" : "");
-				icon = "⏰";
+				log.debug("Invalid time amount in message: {}", message);
 			}
 		}
 
@@ -314,6 +354,11 @@ public class BrbPlugin extends Plugin
 		if (player != null)
 		{
 			playerPositions.put(playerName, player.getWorldLocation());
+			log.debug("Player {} found in player list, position tracked", playerName);
+		}
+		else
+		{
+			log.debug("Player {} NOT found in player list (may have icon/special characters)", playerName);
 		}
 
 		updateStatistics(playerName, durationMs);
@@ -466,13 +511,30 @@ public class BrbPlugin extends Plugin
 		{
 			if (player != null)
 			{
-				String name = normalizePlayerName(player.getName());
+				String rawName = player.getName();
+				String name = normalizePlayerName(rawName);
+				
+				// Debug logging when searching for players with icons
+				if (rawName != null && !rawName.equals(name) && name != null && name.equals(playerName))
+				{
+					StringBuilder rawChars = new StringBuilder();
+					for (char c : rawName.toCharArray())
+					{
+						rawChars.append(String.format("'%c'(%d) ", c, (int) c));
+					}
+					log.debug("Found player match - Searching: '{}', Player raw: '{}' [{}], Player normalized: '{}'", 
+						playerName, rawName, rawChars.toString().trim(), name);
+				}
+				
 				if (name != null && name.equals(playerName))
 				{
 					return player;
 				}
 			}
 		}
+		
+		// Debug logging when player not found - show what we're searching for
+		log.debug("Player '{}' not found in player list. Total players checked: {}", playerName, players.size());
 		return null;
 	}
 }

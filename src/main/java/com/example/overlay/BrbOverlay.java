@@ -245,8 +245,8 @@ public class BrbOverlay extends Overlay
 			case TILE:
 				renderTileHighlight(graphics, localPoint, color);
 				break;
-			case GLOW:
-				renderGlowHighlight(graphics, player, localPoint, color);
+			case DISCO:
+				renderDiscoHighlight(graphics, player, localPoint);
 				break;
 			case OUTLINE:
 				renderOutlineHighlight(graphics, player, localPoint, color);
@@ -276,24 +276,104 @@ public class BrbOverlay extends Overlay
 		graphics.fillPolygon(tilePoly);
 	}
 
-	private void renderGlowHighlight(Graphics2D graphics, Player player, LocalPoint localPoint, Color color)
+	private void renderDiscoHighlight(Graphics2D graphics, Player player, LocalPoint localPoint)
 	{
+		int width = config.highlightWidth();
+		int feather = config.highlightFeather();
+		
+		// Generate rainbow color based on current time
+		Color rainbowColor = getRainbowColor();
+		
 		Color fillColor = new Color(
-			color.getRed(),
-			color.getGreen(),
-			color.getBlue(),
+			rainbowColor.getRed(),
+			rainbowColor.getGreen(),
+			rainbowColor.getBlue(),
 			150
 		);
 
-		modelOutlineRenderer.drawOutline(player, 12, fillColor, 8);
-		modelOutlineRenderer.drawOutline(player, 10, fillColor, 6);
-		modelOutlineRenderer.drawOutline(player, 8, fillColor, 4);
-		modelOutlineRenderer.drawOutline(player, 2, color, 0);
+		// Create multiple layers for glow effect with rainbow color
+		int outerWidth = width + feather * 2;
+		int midWidth = width + feather;
+		
+		if (outerWidth > 0)
+		{
+			modelOutlineRenderer.drawOutline(player, outerWidth, fillColor, feather * 2);
+		}
+		if (midWidth > 0)
+		{
+			modelOutlineRenderer.drawOutline(player, midWidth, fillColor, feather);
+		}
+		if (width > 0)
+		{
+			modelOutlineRenderer.drawOutline(player, width, rainbowColor, 0);
+		}
 	}
 
 	private void renderOutlineHighlight(Graphics2D graphics, Player player, LocalPoint localPoint, Color color)
 	{
-		modelOutlineRenderer.drawOutline(player, 3, color, 0);
+		int width = config.highlightWidth();
+		int feather = config.highlightFeather();
+		modelOutlineRenderer.drawOutline(player, width, color, feather);
+	}
+
+	private Color getRainbowColor()
+	{
+		long time = System.currentTimeMillis();
+		// Cycle through hue over 3 seconds (3000ms)
+		float hue = (time % 3000) / 3000.0f;
+		
+		// Convert HSL to RGB
+		// H: hue (0-1), S: saturation (1.0 = full), L: lightness (0.5 = medium)
+		float saturation = 1.0f;
+		float lightness = 0.5f;
+		
+		float c = (1 - Math.abs(2 * lightness - 1)) * saturation;
+		float x = c * (1 - Math.abs((hue * 6) % 2 - 1));
+		float m = lightness - c / 2;
+		
+		float r, g, b;
+		if (hue < 1.0f / 6)
+		{
+			r = c;
+			g = x;
+			b = 0;
+		}
+		else if (hue < 2.0f / 6)
+		{
+			r = x;
+			g = c;
+			b = 0;
+		}
+		else if (hue < 3.0f / 6)
+		{
+			r = 0;
+			g = c;
+			b = x;
+		}
+		else if (hue < 4.0f / 6)
+		{
+			r = 0;
+			g = x;
+			b = c;
+		}
+		else if (hue < 5.0f / 6)
+		{
+			r = x;
+			g = 0;
+			b = c;
+		}
+		else
+		{
+			r = c;
+			g = 0;
+			b = x;
+		}
+		
+		return new Color(
+			(int) ((r + m) * 255),
+			(int) ((g + m) * 255),
+			(int) ((b + m) * 255)
+		);
 	}
 }
 

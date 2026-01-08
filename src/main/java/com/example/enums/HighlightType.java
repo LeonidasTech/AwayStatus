@@ -3,7 +3,7 @@ package com.example.enums;
 public enum HighlightType
 {
 	TILE("Tile"),
-	GLOW("Glow"),
+	DISCO("Disco"),
 	OUTLINE("Outline");
 
 	private final String displayName;
@@ -19,4 +19,5 @@ public enum HighlightType
 		return displayName;
 	}
 }
+
 

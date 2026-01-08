@@ -155,6 +155,32 @@ public interface BrbConfig extends Config
 		return new Color(0xFF0000);
 	}
 
+	@Range(min = 1, max = 20)
+	@ConfigItem(
+		keyName = "highlightWidth",
+		name = "Highlight Width",
+		description = "Width/thickness of the highlight (for Glow, Disco, and Outline)",
+		section = displaySection,
+		position = 4
+	)
+	default int highlightWidth()
+	{
+		return 3;
+	}
+
+	@Range(min = 0, max = 20)
+	@ConfigItem(
+		keyName = "highlightFeather",
+		name = "Highlight Feather",
+		description = "Feather/softness of the highlight edge (for Glow, Disco, and Outline)",
+		section = displaySection,
+		position = 5
+	)
+	default int highlightFeather()
+	{
+		return 0;
+	}
+
 
 	@ConfigItem(
 		keyName = "showMinimapIndicator",
