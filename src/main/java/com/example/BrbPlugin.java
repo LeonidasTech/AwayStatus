@@ -107,7 +107,6 @@ public class BrbPlugin extends Plugin
 		overlayManager.add(overlay);
 		overlayManager.add(minimapOverlay);
 		parseCustomKeywords();
-		log.debug("BRB/AFK Status plugin started!");
 	}
 
 	private void parseCustomKeywords()
@@ -142,7 +141,6 @@ public class BrbPlugin extends Plugin
 		overlayManager.remove(minimapOverlay);
 		afkPlayers.clear();
 		playerStats.clear();
-		log.debug("BRB/AFK Status plugin stopped!");
 	}
 
 	@Subscribe
@@ -166,37 +164,15 @@ public class BrbPlugin extends Plugin
 		String rawPlayerName = event.getName();
 		String playerName = normalizePlayerName(rawPlayerName);
 		
-		// Debug logging for players with icons/special characters
-		if (rawPlayerName != null && !rawPlayerName.equals(playerName))
-		{
-			StringBuilder rawChars = new StringBuilder();
-			for (char c : rawPlayerName.toCharArray())
-			{
-				rawChars.append(String.format("'%c'(%d) ", c, (int) c));
-			}
-			log.debug("Player name normalization - Raw: '{}' [{}], Normalized: '{}'", 
-				rawPlayerName, rawChars.toString().trim(), playerName);
-		}
-		
 		if (playerName == null || playerName.isEmpty())
 		{
-			log.debug("Skipping chat message - player name is null or empty. Raw: '{}', Normalized: '{}', Message: '{}'", 
-				rawPlayerName, playerName, event.getMessage());
 			return;
 		}
-		
-		log.debug("Processing chat message from player - Raw name: '{}', Normalized: '{}', Message: '{}'", 
-			rawPlayerName, playerName, event.getMessage());
 
 		// If player is already AFK and types anything, remove AFK status
-		boolean wasAfk = afkPlayers.containsKey(playerName);
-		if (wasAfk)
+		if (afkPlayers.containsKey(playerName))
 		{
-			AfkStatus removed = afkPlayers.remove(playerName);
-			if (removed != null)
-			{
-				log.debug("Player {} removed AFK status (typed message)", playerName);
-			}
+			afkPlayers.remove(playerName);
 			playerPositions.remove(playerName);
 		}
 		
@@ -266,7 +242,7 @@ public class BrbPlugin extends Plugin
 				}
 				catch (NumberFormatException e)
 				{
-					log.debug("Invalid time amount in message: {}", message);
+					// Invalid time amount, ignore
 				}
 			}
 			
@@ -282,8 +258,6 @@ public class BrbPlugin extends Plugin
 			AfkStatus status = new AfkStatus(statusText, endTime, startTime, streak, currentTime, icon);
 			afkPlayers.put(playerName, status);
 			updateStatistics(playerName, durationMs);
-		
-		log.debug("Player {} set to {} (custom keyword, streak: {})", playerName, statusText, streak);
 			return;
 		}
 
@@ -334,7 +308,7 @@ public class BrbPlugin extends Plugin
 			}
 			catch (NumberFormatException e)
 			{
-				log.debug("Invalid time amount in message: {}", message);
+				// Invalid time amount, ignore
 			}
 		}
 
@@ -354,16 +328,9 @@ public class BrbPlugin extends Plugin
 		if (player != null)
 		{
 			playerPositions.put(playerName, player.getWorldLocation());
-			log.debug("Player {} found in player list, position tracked", playerName);
-		}
-		else
-		{
-			log.debug("Player {} NOT found in player list (may have icon/special characters)", playerName);
 		}
 
 		updateStatistics(playerName, durationMs);
-
-		log.debug("Player {} set to {} (duration: {}ms, streak: {})", playerName, statusText, durationMs, streak);
 	}
 
 	private void updateStatistics(String playerName, long durationMs)
@@ -406,11 +373,7 @@ public class BrbPlugin extends Plugin
 
 				if (lastPosition != null && !currentPosition.equals(lastPosition))
 				{
-					AfkStatus removed = afkPlayers.remove(playerName);
-					if (removed != null)
-					{
-						log.debug("Player {} removed AFK status (moved)", playerName);
-					}
+					afkPlayers.remove(playerName);
 					playerPositions.remove(playerName);
 				}
 				else
@@ -514,18 +477,6 @@ public class BrbPlugin extends Plugin
 				String rawName = player.getName();
 				String name = normalizePlayerName(rawName);
 				
-				// Debug logging when searching for players with icons
-				if (rawName != null && !rawName.equals(name) && name != null && name.equals(playerName))
-				{
-					StringBuilder rawChars = new StringBuilder();
-					for (char c : rawName.toCharArray())
-					{
-						rawChars.append(String.format("'%c'(%d) ", c, (int) c));
-					}
-					log.debug("Found player match - Searching: '{}', Player raw: '{}' [{}], Player normalized: '{}'", 
-						playerName, rawName, rawChars.toString().trim(), name);
-				}
-				
 				if (name != null && name.equals(playerName))
 				{
 					return player;
@@ -533,8 +484,6 @@ public class BrbPlugin extends Plugin
 			}
 		}
 		
-		// Debug logging when player not found - show what we're searching for
-		log.debug("Player '{}' not found in player list. Total players checked: {}", playerName, players.size());
 		return null;
 	}
 }
